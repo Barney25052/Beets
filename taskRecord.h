@@ -2,7 +2,7 @@
 #ifndef TASKRECORD_H
 #define TASKRECORD_H
     struct taskRecord {
-        char* text;
+        char text[65];
         bool isComplete;
     };
     typedef struct taskRecord taskRecord;

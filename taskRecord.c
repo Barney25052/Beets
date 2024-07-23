@@ -1,12 +1,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "taskRecord.h"
 
 taskRecord* taskCreate(char* text) {
     taskRecord* task = malloc(sizeof(taskRecord));
+    taskSetTask(task, text);
     task->isComplete = false;
-    task->text = text;
 }
 
 void taskMarkComplete(taskRecord* task) {
@@ -15,11 +16,15 @@ void taskMarkComplete(taskRecord* task) {
 
 void taskSetTask(taskRecord* task, char* text) {
     int size = strlen(text);
+    if(size > 64) {
+        size = 64;
+    }
     int taskTextSize = text[size-1] == 0 ? size : size + 1;
-    task->text = calloc(sizeof(char), size+1);
-    for(int i = 0; i < size; i++) {
+    int i;
+    for(i = 0; i < size; i++) {
         task->text[i] = text[i];
     }
+    task->text[i]=0;
 }
 
 char* taskPrint(taskRecord* task) {
