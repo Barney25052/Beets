@@ -26,7 +26,7 @@ void parseTask(char* data, int size, taskList* taskList) {
             taskListPush(taskList,task);
             break;
         case TASK_COMPLETED:
-            taskRecord* mostRecentTask = taskListGetHead(taskList);
+            taskRecord* mostRecentTask = taskListGetTail(taskList);
             if(mostRecentTask != NULL) {
                 taskMarkComplete(mostRecentTask);
             }
