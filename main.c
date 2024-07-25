@@ -10,6 +10,7 @@
 #define VIEW_TASKS 2
 #define COMPLETE_TASK 3
 #define ADD_TASK 4
+#define REMOVE_TASK 5
 
 typedef struct {
     char commandType;
@@ -158,6 +159,10 @@ commandInfo* parseCurrentCommand() {
         type = COMPLETE_TASK;
         return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
     }
+    else if(strcmp("remove", typeAsText) == 0 || strcmp("r", typeAsText) == 0) {
+        type = REMOVE_TASK;
+        return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
+    }
     
     return commandInfoCreate(-1, NULL, 0);
 }
@@ -170,6 +175,7 @@ int main() {
     taskList* taskList = taskListCreate();
     readFileIntoTaskList(FILE_LOCATION, taskList);
     commandInfo* command = commandInfoCreate(NOTHING, NULL, 0);
+    int taskNumber;
 
     while(command->commandType != EXIT_PROGRAM) {
 
@@ -179,7 +185,6 @@ int main() {
                 printAllTasks(taskList);
                 break;
             case COMPLETE_TASK:
-                int taskNumber = 0;
                 sscanf(command->commandData, "%d", &taskNumber);
                 if(taskNumber < 0 || taskNumber >= taskList->count) {
                     printf("Invalid task number\n");
@@ -194,6 +199,15 @@ int main() {
                 taskListPush(taskList, newTask);
                 saveData(FILE_LOCATION, taskList);
                 printAllTasks(taskList);
+                break;
+            case REMOVE_TASK:
+                sscanf(command->commandData, "%d", &taskNumber);
+                if(taskNumber < 0 || taskNumber >= taskList->count) {
+                    printf("Invalid task number\n");
+                    break;
+                }
+                taskListRemoveAtIndex(taskList, taskNumber);
+                saveData(FILE_LOCATION, taskList);
                 break;
             case EXIT_PROGRAM:
                 return 0;

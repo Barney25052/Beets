@@ -18,7 +18,9 @@ typedef struct taskList taskList;
 taskListNode* taskNodeCreate(taskRecord* data);
 taskList* taskListCreate();
 void taskListPush(taskList* taskList, taskRecord* data);
+void taskListRemoveAtIndex(taskList* taskList, int index);
 taskRecord* taskListGetHead(taskList* taskList);
 taskRecord* taskListGetTail(taskList* taskList);
+taskListNode* taskListGetNode(taskList* taskList, int index);
 taskRecord* taskListGetTask(taskList* taskList, int index);
 #endif

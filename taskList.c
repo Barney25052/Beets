@@ -1,5 +1,5 @@
 #include "taskList.h"
-#include <stdlib.h>
+#include <stdlib.h>  
 #include "taskRecord.h"
 
 taskListNode* taskNodeCreate(taskRecord* data) {
@@ -31,6 +31,27 @@ void taskListPush(taskList* taskList, taskRecord* data) {
     taskList->count ++;
 }
 
+
+void taskListRemoveAtIndex(taskList* taskList, int index) {
+    if(index < 0 || index >= taskList->count) {
+        return;
+    }
+
+    taskListNode* taskToRemove = taskListGetNode(taskList, index);
+    if(taskToRemove->prev != NULL) {
+        taskToRemove->prev->next = taskToRemove->next;
+    } else {
+        taskList->head = taskToRemove->next;
+    }
+    if(taskToRemove->next != NULL) {
+        taskToRemove->next->prev = taskToRemove->prev;
+    } else {
+        taskList->tail = taskToRemove->prev;
+    }
+    taskList->count --;
+    free(taskToRemove);
+}
+
 taskRecord* taskListGetHead(taskList* taskList) {
     return taskList->head->data;
 }
@@ -39,7 +60,7 @@ taskRecord* taskListGetTail(taskList* taskList) {
     return taskList->tail->data;
 }
 
-taskRecord* taskListGetTask(taskList* taskList, int index) {
+taskListNode* taskListGetNode(taskList* taskList, int index) {
     if(index >= taskList->count) {
         return NULL;
     }
@@ -48,6 +69,10 @@ taskRecord* taskListGetTask(taskList* taskList, int index) {
     for(int i = 0; i < index; i++) {
         currentNode = currentNode->next;
     }
+    return currentNode;
+}
 
-    return currentNode->data;
+taskRecord* taskListGetTask(taskList* taskList, int index) {
+    
+    return taskListGetNode(taskList, index)->data;
 }
