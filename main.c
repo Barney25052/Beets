@@ -5,9 +5,24 @@
 #include "loader.c"
 #include "saver.c"
 
-#define VIEW_TASKS 0
-#define ADD_TASK 1
-#define EXIT_PROGRAM 2
+#define EXIT_PROGRAM 0
+#define NOTHING 1
+#define VIEW_TASKS 2
+#define COMPLETE_TASK 3
+#define ADD_TASK 4
+
+typedef struct {
+    char commandType;
+    char* commandData;
+    size_t commandDataLength;
+} commandInfo;
+
+commandInfo* commandInfoCreate(char commandType, char* commandData, size_t commandDataLength) {
+    commandInfo* commandInfo = malloc(sizeof(commandInfo));
+    commandInfo->commandType = commandType;
+    commandInfo->commandData = commandData;
+    commandInfo->commandDataLength = commandDataLength;
+}
 
 void printAllTasks(taskList* taskList) {
     for(int i = 0; i < taskList->count; i++) {
@@ -58,26 +73,93 @@ taskRecord* getTaskFromInput(taskList* taskList, bool mustReturnVal) {
 
 const char* FILE_LOCATION = "/home/ryan-bell/Documents/Beets/notes.txt";
 
-int getOption(char* messageText) {
-    if(messageText == NULL) {
-        messageText = "Please enter an option: ";
-    }
-    int userInput;
-    printf("%s", messageText);
-    scanf("%d", &userInput);
-    printf("\nUser input: %d\n", userInput);
-    return userInput;
+typedef struct {
+    char* data;
+    int size;
+    bool isFinalPart;
+} commandPart;
+
+commandPart* commandPartCreate(char* data, int size, bool isFinalPart) {
+    commandPart* commandPart = malloc(sizeof(commandPart));
+    commandPart->data = data;
+    commandPart->size = size;
+    commandPart->isFinalPart = isFinalPart;
 }
 
-int mainMenu() {
-    char* options[3] = {"View Tasks", "Add Task", "Exit"};
-    int optionsLength = 3;
+commandPart* readCommandPart() {
+    char c;
+    char* partData = calloc(64, sizeof(char));
+    int partLength = 0;
+    bool inText = false;
+    while(true) {
+        scanf("%c", &c);
+        if(c == '"') {
+            inText = !inText;
+            continue;
+        }
+        if(c == '\n') {
+            break;
+        }
+        if(c == ' ' && !inText) {
+            break;
+        }
+        partData[partLength] = c;
+        partLength++;
+    }
+    partData[partLength] = 0;
+    partData = realloc(partData, partLength * sizeof(char));
 
-    for(int i = 0; i < optionsLength; i++) {
-        printf("%d - %s\n", i , options[i]);
+    commandPart* commandPart = commandPartCreate(partData, partLength, c == '\n');
+    return commandPart;
+}
+
+char** readCommand(int* size) {
+    char** commandParts = malloc (8 * sizeof(char*));
+    int currentLength = 0;
+    bool readingCommand = true;
+
+    while(readingCommand) {
+        commandPart* currentPart = readCommandPart();
+        if(currentPart->size > 0) {
+            commandParts[currentLength] = currentPart->data;
+            currentLength ++;
+        }
+        readingCommand = !currentPart->isFinalPart;
+        free(currentPart);
+    }
+    commandParts = realloc(commandParts, currentLength);
+    *size = currentLength;
+    return commandParts;
+}
+
+commandInfo* parseCurrentCommand() {
+    int commandPartsLength = 0;
+    char** commandParts = readCommand(&commandPartsLength);
+    if(commandPartsLength == 0) {
+        return commandInfoCreate(NOTHING, NULL, 0);
     }
 
-    int userInput = getOption(NULL);
+    char* typeAsText = commandParts[0];
+    char type = NOTHING;
+
+    if(strcmp("e", typeAsText) == 0 || strcmp("exit", typeAsText) == 0) {
+        type = EXIT_SUCCESS;
+        return commandInfoCreate(type, NULL, 0);
+    }
+    else if(strcmp("add", typeAsText) == 0 ) {
+        type = ADD_TASK;
+        return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
+    }
+    else if(strcmp("view", typeAsText) == 0 || strcmp("v", typeAsText) == 0) {
+        type = VIEW_TASKS;
+        return commandInfoCreate(type, NULL, 0);
+    }
+    else if(strcmp("complete", typeAsText) == 0 || strcmp("x", typeAsText) == 0) {
+        type = COMPLETE_TASK;
+        return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
+    }
+    
+    return commandInfoCreate(-1, NULL, 0);
 }
 
 int main() {
@@ -87,39 +169,38 @@ int main() {
 
     taskList* taskList = taskListCreate();
     readFileIntoTaskList(FILE_LOCATION, taskList);
-    int mainMenuOption ;
+    commandInfo* command = commandInfoCreate(NOTHING, NULL, 0);
 
-    while(mainMenuOption != EXIT_PROGRAM) {
+    while(command->commandType != EXIT_PROGRAM) {
 
-        mainMenuOption = mainMenu();
-        switch(mainMenuOption) {
+        command = parseCurrentCommand();
+        switch(command->commandType) {
             case VIEW_TASKS:
                 printAllTasks(taskList);
-                taskRecord* task = getTaskFromInput(taskList, false);
-                if(task == NULL) {
-                    printf("Invalid task selection");
-                    return -1;
+                break;
+            case COMPLETE_TASK:
+                int taskNumber = 0;
+                sscanf(command->commandData, "%d", &taskNumber);
+                if(taskNumber < 0 || taskNumber >= taskList->count) {
+                    printf("Invalid task number\n");
+                    break;
                 }
-                taskMarkComplete(task);
+                taskRecord* record = taskListGetTask(taskList, taskNumber);
+                taskMarkComplete(record);
                 saveData(FILE_LOCATION, taskList);
-                printf("\n\n");
-                printAllTasks(taskList);
                 break;
             case ADD_TASK:
-                printf("Please enter the task: ");
-                char userInput[64];
-                scanf("%c", userInput);
-                readLine(userInput, 65);
-                taskRecord* newTask = taskCreate(userInput);
+                taskRecord* newTask = taskCreate(command->commandData);
                 taskListPush(taskList, newTask);
                 saveData(FILE_LOCATION, taskList);
+                printAllTasks(taskList);
                 break;
             case EXIT_PROGRAM:
                 return 0;
             default:
-                printf("Unkown command");
-                return -1;
-            
+                printf("Unkown command\n");
+                break;
+            free(command);
         }
     }
 
