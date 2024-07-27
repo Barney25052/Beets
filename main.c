@@ -12,6 +12,10 @@
 #define ADD_TASK 4
 #define REMOVE_TASK 5
 
+#define CLEARLINE "\33[2K"  //erase the current line;
+#define MOVECURSORUP "033[A"  //moves the cursor up one line
+#define RETURNSTART "\r"  //goes to the start of the line
+
 typedef struct {
     char commandType;
     char* commandData;
@@ -163,7 +167,6 @@ commandInfo* parseCurrentCommand() {
         type = REMOVE_TASK;
         return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
     }
-    
     return commandInfoCreate(-1, NULL, 0);
 }
 
@@ -212,7 +215,10 @@ int main() {
             case EXIT_PROGRAM:
                 return 0;
             default:
-                printf("Unkown command\n");
+                printf("Unkown command");
+                //printf("\rTest");
+                //printf("\b\b\b\b\b\b\b\b\bWhere are we now?");
+                //printf("\r\033[ABlah");
                 break;
             free(command);
         }

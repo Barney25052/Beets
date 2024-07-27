@@ -3,6 +3,7 @@
 #include "taskList.h"
 #include "taskRecord.h"
 #include "serialization.h"
+#include "time.h"
 
 void saveData(const char* fileLocation, taskList* taskList) {
     FILE* fileptr = fopen(fileLocation, "w");
@@ -23,6 +24,15 @@ void saveData(const char* fileLocation, taskList* taskList) {
         //Add Completed
         if(currentTask->isComplete) {
             fputc(TASK_COMPLETED, fileptr);
+            fputc('\n', fileptr);
+        }
+
+        //Add deadline
+        if(currentTask->hasDeadline) {
+            fputc(TASK_DEADLINE, fileptr);
+            char* deadline = malloc(24 * sizeof(char));
+            strftime(deadline, 24, "%Y,%m,%d,%H", currentTask->deadline);
+            fputs(deadline, fileptr);
             fputc('\n', fileptr);
         }
     }

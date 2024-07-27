@@ -9,6 +9,7 @@ char* parseTaskSegmentInformation(char* segmentData, int size) {
     for(int i = 1; i < size; i++) {
         parsedData[i-1] = segmentData[i];
     }
+    parsedData[size-1] =0;
     return parsedData;
 }
 
@@ -19,6 +20,7 @@ void parseTask(char* data, int size, taskList* taskList) {
     }
 
     char dataType = data[0];
+    taskRecord* mostRecentTask;
     switch(dataType) {
         case TASK_INFO:
             char* taskInfo = parseTaskSegmentInformation(data, size);
@@ -26,9 +28,34 @@ void parseTask(char* data, int size, taskList* taskList) {
             taskListPush(taskList,task);
             break;
         case TASK_COMPLETED:
-            taskRecord* mostRecentTask = taskListGetTail(taskList);
+            mostRecentTask = taskListGetTail(taskList);
             if(mostRecentTask != NULL) {
                 taskMarkComplete(mostRecentTask);
+            }
+            break;
+        case TASK_DEADLINE:
+            char* dateText = parseTaskSegmentInformation(data, size);
+            int length = strlen(dateText);
+            int currentNum = 0, j = 0;
+            int dateInfo[4] = {0};
+            char currentChar;
+            for(int i = 0; i < length; i++) {
+                currentChar = dateText[i];
+                if(currentChar < '0' || currentChar > '9') {
+                    dateInfo[j] = currentNum;
+                    j++;
+                    currentNum = 0;
+                    continue;
+                }
+                currentNum*=10;
+                currentNum += (currentChar - '0');
+            }
+            if(j < 4) {
+                dateInfo[j] = currentNum;
+            }
+            mostRecentTask = taskListGetTail(taskList);
+            if(mostRecentTask != NULL) {
+                taskSetDeadline(mostRecentTask, dateInfo[0], dateInfo[1], dateInfo[2], dateInfo[3]);
             }
             break;
         default:
