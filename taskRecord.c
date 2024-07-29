@@ -25,6 +25,7 @@ taskRecord* taskCreate(char* text) {
     taskSetTask(task, text);
     task->isComplete = false;
     task->hasDeadline = false;
+    task->tags = tagCollectionCreate(0);
     return task;
 }
 

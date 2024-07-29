@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <time.h>
+#include "taskTag.h"
 #ifndef TASKRECORD_H
 #define TASKRECORD_H
     struct taskRecord {
@@ -7,6 +8,7 @@
         bool isComplete;
         bool hasDeadline;
         struct tm* deadline;
+        taskTagCollection* tags;
     };
     typedef struct taskRecord taskRecord;
     taskRecord* taskCreate(char* text);
