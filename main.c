@@ -2,6 +2,7 @@
 #include <string.h>
 #include "taskRecord.h"
 #include "taskList.h"
+#include "taskTag.h"
 #include "loader.c"
 #include "saver.c"
 
@@ -29,9 +30,14 @@ commandInfo* commandInfoCreate(char commandType, char* commandData, size_t comma
     commandInfo->commandDataLength = commandDataLength;
 }
 
-void printAllTasks(taskList* taskList) {
+void printAllTasks(taskList* taskList, taskTag* tag) {
+    taskListNode* currentTaskNode = taskList->head;
     for(int i = 0; i < taskList->count; i++) {
-        printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
+        taskRecord* currentTask = currentTaskNode->data;
+        if(tagCollectionContainsTag(currentTask->tags, tag)) {
+            printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
+        }
+        currentTaskNode = currentTaskNode->next;
     }
 }
 
@@ -170,6 +176,19 @@ commandInfo* parseCurrentCommand() {
     return commandInfoCreate(-1, NULL, 0);
 }
 
+//TEMP FOR TESTING
+void addTagsToTask(taskTagCollection* collection, taskList* taskList) {
+    taskListNode* currentTask = taskList->head;
+    for(int i = 0; i < taskList->count; i++) {
+        if(i % 2 == 0) {
+            currentTask = currentTask->next;
+            continue;
+        }
+        taskAddTag(currentTask->data, collection->tags[0]);
+        currentTask = currentTask->next;
+    }
+}
+
 int main() {
     printf("Welcome to Beets!\n\nThese are your current tasks.\n------------------\n");
 
@@ -177,6 +196,12 @@ int main() {
 
     taskList* taskList = taskListCreate();
     readFileIntoTaskList(FILE_LOCATION, taskList);
+    
+    taskTagCollection* tagCollection = tagCollectionCreate(0);
+    tagCollectionLoadTag(tagCollection, "Homework");
+    tagCollectionLoadTag(tagCollection, "Daily");
+    addTagsToTask(tagCollection, taskList);
+
     commandInfo* command = commandInfoCreate(NOTHING, NULL, 0);
     int taskNumber;
 
@@ -185,7 +210,7 @@ int main() {
         command = parseCurrentCommand();
         switch(command->commandType) {
             case VIEW_TASKS:
-                printAllTasks(taskList);
+                printAllTasks(taskList, tagCollection->tags[0]);
                 break;
             case COMPLETE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
@@ -201,7 +226,7 @@ int main() {
                 taskRecord* newTask = taskCreate(command->commandData);
                 taskListPush(taskList, newTask);
                 saveData(FILE_LOCATION, taskList);
-                printAllTasks(taskList);
+                printAllTasks(taskList, tagCollection->tags[0]);
                 break;
             case REMOVE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);

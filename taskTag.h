@@ -10,7 +10,7 @@ struct taskTag {
 
 typedef struct taskTag taskTag;
 
-taskTag* taskTagCreate(int id, char* name);
+taskTag* taskTagCreate(char* name);
 
 struct taskTagCollection {
     taskTag** tags;
@@ -24,7 +24,7 @@ taskTagCollection* tagCollectionCreate(int size);
 
 void tagCollectionAddTag(taskTagCollection* collection, taskTag* tag);
 
-void tagCollectionLoadTag(taskTagCollection* collection, int id, char*name);
+void tagCollectionLoadTag(taskTagCollection* collection, char*name);
 
 bool tagCollectionContainsTag(taskTagCollection* collection, taskTag* tag);
 

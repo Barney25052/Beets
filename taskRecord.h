@@ -15,5 +15,6 @@
     void taskMarkComplete(taskRecord* task);
     void taskSetTask(taskRecord* task, char* text);
     void taskSetDeadline(taskRecord* task, int year, int month, int day, int hour);
+    void taskAddTag(taskRecord* task, taskTag* tag);
     char* taskPrint(taskRecord* task);
 #endif

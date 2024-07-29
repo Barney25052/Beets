@@ -15,7 +15,7 @@ void taskTagSetName(taskTag* tag, char* name) {
     tag->name[i] = 0;
 }
 
-taskTag* taskTagCreate(int id, char* name) {
+taskTag* taskTagCreate(char* name) {
     taskTag* taskTag = malloc(sizeof(taskTag));
     taskTagSetName(taskTag, name);
     return taskTag;
@@ -42,8 +42,8 @@ void tagCollectionAddTag(taskTagCollection* collection, taskTag* tag) {
     collection->numberOfTags += 1;
 }
 
-void tagCollectionLoadTag(taskTagCollection* collection, int id, char*name) {
-    taskTag* newTaskTag = taskTagCreate(id, name);
+void tagCollectionLoadTag(taskTagCollection* collection, char* name) {
+    taskTag* newTaskTag = taskTagCreate(name);
     tagCollectionAddTag(collection, newTaskTag);
 }
 

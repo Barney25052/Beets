@@ -60,3 +60,11 @@ char* taskPrint(taskRecord* task) {
     sprintf(taskString, "[%c] %s%s", task->isComplete ? 'X' : ' ', task->text, dateString);
     return taskString;
 }
+
+void taskAddTag(taskRecord* task, taskTag* tag) {
+    if(tagCollectionContainsTag(task->tags, tag)) {
+        return;
+    }
+    tagCollectionAddTag(task->tags, tag);
+    printf("Added tag: %s to task %s\n", tag->name, task->text);
+}
