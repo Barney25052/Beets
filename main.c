@@ -20,6 +20,7 @@
 #define RETURNSTART "\r"  //goes to the start of the line
 
 int currentLines = 0;
+int currentPage = 0;
 
 void consolePrint(char* text) {
     printf("%s", text);
@@ -67,7 +68,7 @@ void printCurrentScreen(taskList* taskList, int page) {
     int totalPages = taskList->count/MAX_TASKS_PER_PAGE + 1;
     clearScreen(currentLines);
     currentLines = 0;
-    printTaskPage(taskList, 0);
+    printTaskPage(taskList, page);
     printf("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
     currentLines += 4;
 }
@@ -196,6 +197,19 @@ commandInfo* parseCurrentCommand() {
         type = VIEW_TASKS;
         return commandInfoCreate(type, NULL, 0);
     }
+    else if(strcmp("n", typeAsText) == 0) {
+        type = VIEW_TASKS;
+        char newPage = currentPage + 1;
+        return commandInfoCreate(type, &newPage, 1);
+    }
+    else if(strcmp("p", typeAsText) == 0) {
+        type = VIEW_TASKS;
+        char newPage = currentPage - 1;
+        if(newPage < 0) {
+            newPage = 0;
+        }
+        return commandInfoCreate(type, &newPage, 1);
+    }
     else if(strcmp("complete", typeAsText) == 0 || strcmp("x", typeAsText) == 0) {
         type = COMPLETE_TASK;
         return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
@@ -240,9 +254,19 @@ int main() {
 
     while(command->commandType != EXIT_PROGRAM) {
 
+        int maxPages = (taskList->count/MAX_TASKS_PER_PAGE) + 1;
         command = parseCurrentCommand();
         switch(command->commandType) {
             case VIEW_TASKS:
+                if(command->commandData != NULL) {
+                    currentPage = *command->commandData;
+                    if(currentPage >= maxPages-1) {
+                        currentPage = maxPages-1;
+                    } 
+                    if(currentPage < 0) {
+                        currentPage = 0;
+                    }
+                }
                 break;
             case COMPLETE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
@@ -278,7 +302,7 @@ int main() {
                 consolePrint("Unkown command");
                 break;
         }
-        printCurrentScreen(taskList, 0);
+        printCurrentScreen(taskList, currentPage);
         free(command);
     }
 
