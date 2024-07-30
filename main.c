@@ -13,6 +13,8 @@
 #define ADD_TASK 4
 #define REMOVE_TASK 5
 
+#define MAX_TASKS_PER_PAGE 9
+
 #define CLEARLINE "\33[2K"  //erase the current line;
 #define MOVECURSORUP "033[A"  //moves the cursor up one line
 #define RETURNSTART "\r"  //goes to the start of the line
@@ -30,9 +32,12 @@ commandInfo* commandInfoCreate(char commandType, char* commandData, size_t comma
     commandInfo->commandDataLength = commandDataLength;
 }
 
-void printAllTasks(taskList* taskList) {
+void printTaskPage(taskList* taskList, int page) {
+    int startIndex = page * MAX_TASKS_PER_PAGE;
+    int endIndex = startIndex + MAX_TASKS_PER_PAGE;
+    endIndex = endIndex < taskList->count ? endIndex : taskList->count;
     taskListNode* currentTaskNode = taskList->head;
-    for(int i = 0; i < taskList->count; i++) {
+    for(int i = startIndex; i < endIndex; i++) {
         taskRecord* currentTask = currentTaskNode->data;
         printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
         currentTaskNode = currentTaskNode->next;
@@ -188,7 +193,7 @@ void addTagsToTask(taskTagCollection* collection, taskList* taskList) {
 }
 
 int main() {
-    printf("Welcome to Beets!\n\nThese are your current tasks.\n------------------\n");
+    printf("Welcome to Beets!\n\n");
 
     //Opening file.
 
@@ -208,7 +213,7 @@ int main() {
         command = parseCurrentCommand();
         switch(command->commandType) {
             case VIEW_TASKS:
-                printAllTasks(taskList);
+                printTaskPage(taskList);
                 break;
             case COMPLETE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
@@ -224,7 +229,7 @@ int main() {
                 taskRecord* newTask = taskCreate(command->commandData);
                 taskListPush(taskList, newTask);
                 saveData(FILE_LOCATION, taskList);
-                printAllTasks(taskList);
+                printTaskPage(taskList);
                 break;
             case REMOVE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
