@@ -31,7 +31,7 @@ void saveData(const char* fileLocation, taskList* taskList) {
         if(currentTask->hasDeadline) {
             fputc(TASK_DEADLINE, fileptr);
             char* deadline = malloc(24 * sizeof(char));
-            strftime(deadline, 24, "%Y,%m,%d,%H", currentTask->deadline);
+            sprintf(deadline, "%d", currentTask->deadline);
             fputs(deadline, fileptr);
             fputc('\n', fileptr);
         }

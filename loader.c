@@ -3,6 +3,7 @@
 #include "taskList.h"
 #include "taskRecord.h"
 #include "serialization.h"
+#include "time.h"
 
 char* parseTaskSegmentInformation(char* segmentData, int size) {
     char* parsedData = malloc((size-1) * sizeof(char));
@@ -35,27 +36,11 @@ void parseTask(char* data, int size, taskList* taskList) {
             break;
         case TASK_DEADLINE:
             char* dateText = parseTaskSegmentInformation(data, size);
-            int length = strlen(dateText);
-            int currentNum = 0, j = 0;
-            int dateInfo[4] = {0};
-            char currentChar;
-            for(int i = 0; i < length; i++) {
-                currentChar = dateText[i];
-                if(currentChar < '0' || currentChar > '9') {
-                    dateInfo[j] = currentNum;
-                    j++;
-                    currentNum = 0;
-                    continue;
-                }
-                currentNum*=10;
-                currentNum += (currentChar - '0');
-            }
-            if(j < 4) {
-                dateInfo[j] = currentNum;
-            }
             mostRecentTask = taskListGetTail(taskList);
             if(mostRecentTask != NULL) {
-                taskSetDeadline(mostRecentTask, dateInfo[0], dateInfo[1], dateInfo[2], dateInfo[3]);
+                int deadline = atoi(dateText); 
+                mostRecentTask->deadline = deadline;
+                mostRecentTask->hasDeadline = true;
             }
             break;
         default:

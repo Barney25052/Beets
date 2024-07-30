@@ -2,23 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
-
-struct tm* createTime(int year, int month, int day, int hour) {
-    hour --;
-    if(hour == -1) {
-        hour = 23;
-    }
-    struct tm* time = malloc(sizeof(struct tm));
-    time->tm_year = year - 1900;
-    time->tm_mon = month - 1;
-    time->tm_mday = day;
-    time->tm_hour = hour;
-    time->tm_min = 30;
-    time->tm_sec = 30;
-    mktime(time);
-    return time;
-}
+#include "time.h"
 
 taskRecord* taskCreate(char* text) {
     taskRecord* task = malloc(sizeof(taskRecord));
@@ -50,18 +34,19 @@ void taskSetTask(taskRecord* task, char* text) {
     task->text[i]=0;
 }
 
-void taskSetDeadline(taskRecord* task, int year, int month, int day, int hour) {
-    task->deadline = createTime(year, month, day, hour);
+void taskSetDeadline(taskRecord* task, int year, int month, int day, int hour, int minute) {
+    task->deadline = timeCreate(year, month, day, hour, minute);
     task->hasDeadline = true;
 }
 
 char* taskPrint(taskRecord* task) {
     char* dateString = calloc(sizeof(char), 24);
     if(task->hasDeadline) {
-        strftime(dateString, 24, "\n\t%d/%m/%y %H:00", task->deadline);
+        sprintf(dateString, "\n\t%s", timeAsString(task->deadline));
     }
     char* taskString = malloc((strlen(task->text)+4+(task->hasDeadline?24:0)) * sizeof(char));
     sprintf(taskString, "[%c] %s%s\n", task->isComplete ? 'X' : ' ', task->text, dateString);
+    free(dateString);
     return taskString;
 }
 
