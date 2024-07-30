@@ -13,6 +13,7 @@
     typedef struct taskRecord taskRecord;
     taskRecord* taskCreate(char* text);
     void taskMarkComplete(taskRecord* task);
+    void taskMarkUncomplete(taskRecord* task);
     void taskSetTask(taskRecord* task, char* text);
     void taskSetDeadline(taskRecord* task, int year, int month, int day, int hour);
     void taskAddTag(taskRecord* task, taskTag* tag);

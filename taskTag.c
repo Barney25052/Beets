@@ -35,7 +35,6 @@ void tagCollectionResize(taskTagCollection* collection) {
     }
     collection->currentSize += TAG_COLLECTION_INC;
     collection->tags = realloc(collection->tags, sizeof(taskTag) * collection->currentSize);
-    printf("Tag collection has successfully been resized to %d\n", collection->currentSize);
 }
 
 void tagCollectionAddTag(taskTagCollection* collection, taskTag* tag) {

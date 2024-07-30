@@ -19,6 +19,13 @@
 #define MOVECURSORUP "033[A"  //moves the cursor up one line
 #define RETURNSTART "\r"  //goes to the start of the line
 
+int currentLines = 0;
+
+void consolePrint(char* text) {
+    printf("%s", text);
+    currentLines += 1;
+}
+
 typedef struct {
     char commandType;
     char* commandData;
@@ -32,6 +39,13 @@ commandInfo* commandInfoCreate(char commandType, char* commandData, size_t comma
     commandInfo->commandDataLength = commandDataLength;
 }
 
+void clearScreen(int numberOfLines) {
+    for(int i = 0; i < numberOfLines; i++) {
+        printf("\r\33[2K\r\33[1A\r");
+    }
+    //printf("Clearing screen of %d lines\n", numberOfLines);
+}
+
 void printTaskPage(taskList* taskList, int page) {
     int startIndex = page * MAX_TASKS_PER_PAGE;
     int endIndex = startIndex + MAX_TASKS_PER_PAGE;
@@ -40,8 +54,22 @@ void printTaskPage(taskList* taskList, int page) {
     for(int i = startIndex; i < endIndex; i++) {
         taskRecord* currentTask = currentTaskNode->data;
         printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
+        currentLines += 2;
+        if(currentTask->hasDeadline) {
+            currentLines ++;
+        }
         currentTaskNode = currentTaskNode->next;
     }
+}
+
+
+void printCurrentScreen(taskList* taskList, int page) {
+    int totalPages = taskList->count/MAX_TASKS_PER_PAGE + 1;
+    clearScreen(currentLines);
+    currentLines = 0;
+    printTaskPage(taskList, 0);
+    printf("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
+    currentLines += 4;
 }
 
 void readLine(char* output, int maxSize) {
@@ -193,7 +221,7 @@ void addTagsToTask(taskTagCollection* collection, taskList* taskList) {
 }
 
 int main() {
-    printf("Welcome to Beets!\n\n");
+    printf("Welcome to Beets!\n");
 
     //Opening file.
 
@@ -208,33 +236,37 @@ int main() {
     commandInfo* command = commandInfoCreate(NOTHING, NULL, 0);
     int taskNumber;
 
+    printCurrentScreen(taskList, 0);
+
     while(command->commandType != EXIT_PROGRAM) {
 
         command = parseCurrentCommand();
         switch(command->commandType) {
             case VIEW_TASKS:
-                printTaskPage(taskList);
                 break;
             case COMPLETE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
                 if(taskNumber < 0 || taskNumber >= taskList->count) {
-                    printf("Invalid task number\n");
+                    consolePrint("Invalid task number\n");
                     break;
                 }
                 taskRecord* record = taskListGetTask(taskList, taskNumber);
-                taskMarkComplete(record);
+                if(record->isComplete) {
+                    taskMarkUncomplete(record);
+                } else {
+                    taskMarkComplete(record);
+                }
                 saveData(FILE_LOCATION, taskList);
                 break;
             case ADD_TASK:
                 taskRecord* newTask = taskCreate(command->commandData);
                 taskListPush(taskList, newTask);
                 saveData(FILE_LOCATION, taskList);
-                printTaskPage(taskList);
                 break;
             case REMOVE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
                 if(taskNumber < 0 || taskNumber >= taskList->count) {
-                    printf("Invalid task number\n");
+                    consolePrint("Invalid task number\n");
                     break;
                 }
                 taskListRemoveAtIndex(taskList, taskNumber);
@@ -243,13 +275,11 @@ int main() {
             case EXIT_PROGRAM:
                 return 0;
             default:
-                printf("Unkown command");
-                //printf("\rTest");
-                //printf("\b\b\b\b\b\b\b\b\bWhere are we now?");
-                //printf("\r\033[ABlah");
+                consolePrint("Unkown command");
                 break;
-            free(command);
         }
+        printCurrentScreen(taskList, 0);
+        free(command);
     }
 
 
