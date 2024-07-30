@@ -30,13 +30,11 @@ commandInfo* commandInfoCreate(char commandType, char* commandData, size_t comma
     commandInfo->commandDataLength = commandDataLength;
 }
 
-void printAllTasks(taskList* taskList, taskTag* tag) {
+void printAllTasks(taskList* taskList) {
     taskListNode* currentTaskNode = taskList->head;
     for(int i = 0; i < taskList->count; i++) {
         taskRecord* currentTask = currentTaskNode->data;
-        if(tagCollectionContainsTag(currentTask->tags, tag)) {
-            printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
-        }
+        printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
         currentTaskNode = currentTaskNode->next;
     }
 }
@@ -210,7 +208,7 @@ int main() {
         command = parseCurrentCommand();
         switch(command->commandType) {
             case VIEW_TASKS:
-                printAllTasks(taskList, tagCollection->tags[0]);
+                printAllTasks(taskList);
                 break;
             case COMPLETE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
@@ -226,7 +224,7 @@ int main() {
                 taskRecord* newTask = taskCreate(command->commandData);
                 taskListPush(taskList, newTask);
                 saveData(FILE_LOCATION, taskList);
-                printAllTasks(taskList, tagCollection->tags[0]);
+                printAllTasks(taskList);
                 break;
             case REMOVE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);

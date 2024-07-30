@@ -1,5 +1,5 @@
 #include <stdbool.h>
-#define TAG_COLLECTION_INC 5
+#define TAG_COLLECTION_INC 3
 
 #ifndef TASKTAG_H
 #define TASKTAG_H
