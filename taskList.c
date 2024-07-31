@@ -61,11 +61,9 @@ taskRecord* taskListGetTail(taskList* taskList) {
 }
 
 taskListNode* taskListGetNode(taskList* taskList, int index) {
-    if(index >= taskList->count) {
-        return NULL;
-    }
-    taskListNode* currentNode = taskList->head;
+    if(index >= taskList->count || index < 0) {return NULL;}
 
+    taskListNode* currentNode = taskList->head;
     for(int i = 0; i < index; i++) {
         currentNode = currentNode->next;
     }
@@ -73,6 +71,5 @@ taskListNode* taskListGetNode(taskList* taskList, int index) {
 }
 
 taskRecord* taskListGetTask(taskList* taskList, int index) {
-    
     return taskListGetNode(taskList, index)->data;
 }

@@ -13,40 +13,41 @@ taskRecord* taskCreate(char* text) {
     return task;
 }
 
-void taskMarkComplete(taskRecord* task) {
-    task->isComplete = true;
-}
-
-void taskMarkUncomplete(taskRecord* task) {
-    task->isComplete = false;
+void taskSetComplete(taskRecord* task, bool complete) {
+    task->isComplete = complete;
 }
 
 void taskSetTask(taskRecord* task, char* text) {
     int size = strlen(text);    
+    int i;
     if(size > 64) {
         size = 64;
     }
-    int taskTextSize = text[size-1] == 0 ? size : size + 1;
-    int i;
     for(i = 0; i < size; i++) {
         task->text[i] = text[i];
     }
     task->text[i]=0;
 }
 
-void taskSetDeadline(taskRecord* task, int year, int month, int day, int hour, int minute) {
+void taskSetDeadline(taskRecord* task, int deadline) {
+    task->deadline = deadline;
+    task->hasDeadline = true;
+}
+
+void taskSetDeadlineFromTime(taskRecord* task, int year, int month, int day, int hour, int minute) {
     task->deadline = timeCreate(year, month, day, hour, minute);
     task->hasDeadline = true;
 }
 
 char* taskPrint(taskRecord* task) {
-    char* dateString = calloc(sizeof(char), 24);
-    if(task->hasDeadline) {
-        sprintf(dateString, "\n\t%s", timeAsString(task->deadline));
-    }
     char* taskString = malloc((strlen(task->text)+4+(task->hasDeadline?24:0)) * sizeof(char));
-    sprintf(taskString, "[%c] %s%s\n", task->isComplete ? 'X' : ' ', task->text, dateString);
-    free(dateString);
+    sprintf(taskString, "[%c] %s", task->isComplete ? 'X' : ' ', task->text);
+    if(task->hasDeadline) {
+        char* dateString = timeAsString(task->deadline);
+        sprintf(taskString, "%s\n\t%s", taskString, dateString);
+        free(dateString);
+    }
+    sprintf(taskString, "%s\n", taskString);
     return taskString;
 }
 

@@ -11,10 +11,10 @@
     };
     typedef struct taskRecord taskRecord;
     taskRecord* taskCreate(char* text);
-    void taskMarkComplete(taskRecord* task);
-    void taskMarkUncomplete(taskRecord* task);
+    void taskSetComplete(taskRecord* task, bool complete);
     void taskSetTask(taskRecord* task, char* text);
-    void taskSetDeadline(taskRecord* task, int year, int month, int day, int hour, int minute);
+    void taskSetDeadline(taskRecord* task, int deadline);
+    void taskSetDeadlineFromTime(taskRecord* task, int year, int month, int day, int hour, int minute);
     void taskAddTag(taskRecord* task, taskTag* tag);
     char* taskPrint(taskRecord* task);
 #endif

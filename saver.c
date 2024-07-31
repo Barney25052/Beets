@@ -6,10 +6,14 @@
 #include "time.h"
 
 void saveData(const char* fileLocation, taskList* taskList) {
+
     FILE* fileptr = fopen(fileLocation, "w");
     int count = taskList->count;
+    taskListNode* currentNode = taskList->head;
+
     for(int i = 0; i < count; i++) {
-        taskRecord* currentTask = taskListGetTask(taskList, i);
+
+        taskRecord* currentTask = currentNode->data;
 
         //Add text
         char* text = currentTask->text;
@@ -34,7 +38,11 @@ void saveData(const char* fileLocation, taskList* taskList) {
             sprintf(deadline, "%d", currentTask->deadline);
             fputs(deadline, fileptr);
             fputc('\n', fileptr);
+            free(deadline);
         }
+
+        currentNode = currentNode->next;
     }
+
     fclose(fileptr);
 }

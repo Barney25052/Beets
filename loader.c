@@ -10,13 +10,13 @@ char* parseTaskSegmentInformation(char* segmentData, int size) {
     for(int i = 1; i < size; i++) {
         parsedData[i-1] = segmentData[i];
     }
-    parsedData[size-1] =0;
+    parsedData[size-1] = 0;
     return parsedData;
 }
 
 void parseTask(char* data, int size, taskList* taskList) {
-    if(size < 1) {
-        //printf("Invalid data!\n");
+
+    if(size == 0) {
         return;
     }
 
@@ -27,36 +27,37 @@ void parseTask(char* data, int size, taskList* taskList) {
             char* taskInfo = parseTaskSegmentInformation(data, size);
             taskRecord* task = taskCreate(taskInfo);
             taskListPush(taskList,task);
+            free(taskInfo);
             break;
         case TASK_COMPLETED:
             mostRecentTask = taskListGetTail(taskList);
-            if(mostRecentTask != NULL) {
-                taskMarkComplete(mostRecentTask);
-            }
+            if(mostRecentTask == NULL) {break;}
+            taskSetComplete(mostRecentTask, task);
             break;
         case TASK_DEADLINE:
-            char* dateText = parseTaskSegmentInformation(data, size);
             mostRecentTask = taskListGetTail(taskList);
-            if(mostRecentTask != NULL) {
-                int deadline = atoi(dateText); 
-                mostRecentTask->deadline = deadline;
-                mostRecentTask->hasDeadline = true;
-            }
+            if(mostRecentTask == NULL) {break;}
+            char* dateText = parseTaskSegmentInformation(data, size);
+            int deadline = atoi(dateText); 
+            mostRecentTask->deadline = deadline;
+            mostRecentTask->hasDeadline = true;
+            free(dateText);
             break;
         default:
-            //printf("Invalid data type '%c'", dataType);
             break;
 
     }
 
 }
 
-bool readPart(FILE* filePtr, taskList* taskList) {
-    char buffer[256];
+char* readPart(FILE* filePtr, taskList* taskList) {
+
+    int bufferSize = 256;
+    char* buffer = calloc(bufferSize, sizeof(char));
     char currentChar;
 
     int i;
-    for(i = 0; i < 256; i++) {
+    for(i = 0; i < bufferSize; i++) {
         currentChar = fgetc(filePtr);
         if(currentChar == '\n' || currentChar == EOF) {
             buffer[i] = 0;
@@ -64,8 +65,10 @@ bool readPart(FILE* filePtr, taskList* taskList) {
         }
         buffer[i] = currentChar;
     }
-    parseTask(buffer, i, taskList);
-    return currentChar == EOF;
+
+    buffer = realloc(buffer, i+1);
+
+    return buffer;
 }
 
 void readFileIntoTaskList(const char* fileLocation, taskList* taskList) {
@@ -79,7 +82,12 @@ void readFileIntoTaskList(const char* fileLocation, taskList* taskList) {
 
     bool isEndOfFile = false;
     while(!isEndOfFile) {
-        isEndOfFile = readPart(filePtr, taskList);
+        char* buffer = readPart(filePtr, taskList);
+        if(buffer[0] == 0) {
+            isEndOfFile = true;
+        } else {
+            parseTask(buffer, strlen(buffer), taskList);
+        }
     }
 
     fclose(filePtr);

@@ -13,7 +13,7 @@
 #define ADD_TASK 4
 #define REMOVE_TASK 5
 
-#define MAX_TASKS_PER_PAGE 9
+#define MAX_TASKS_PER_PAGE 4
 
 #define CLEARLINE "\33[2K"  //erase the current line;
 #define MOVECURSORUP "033[A"  //moves the cursor up one line
@@ -54,7 +54,9 @@ void printTaskPage(taskList* taskList, int page) {
     taskListNode* currentTaskNode = taskList->head;
     for(int i = startIndex; i < endIndex; i++) {
         taskRecord* currentTask = currentTaskNode->data;
-        printf("%d - %s\n", i, taskPrint(taskListGetTask(taskList, i)));
+        char* taskText = taskPrint(taskListGetTask(taskList, i));
+        printf("%d - %s\n", i, taskText);
+        free(taskText);
         currentLines += 2;
         if(currentTask->hasDeadline) {
             currentLines ++;
@@ -66,7 +68,7 @@ void printTaskPage(taskList* taskList, int page) {
 
 void printCurrentScreen(taskList* taskList, int page) {
     int totalPages = taskList->count/MAX_TASKS_PER_PAGE + 1;
-    clearScreen(currentLines);
+    //clearScreen(currentLines);
     currentLines = 0;
     printTaskPage(taskList, page);
     printf("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
@@ -275,11 +277,7 @@ int main() {
                     break;
                 }
                 taskRecord* record = taskListGetTask(taskList, taskNumber);
-                if(record->isComplete) {
-                    taskMarkUncomplete(record);
-                } else {
-                    taskMarkComplete(record);
-                }
+                taskSetComplete(record,!record->isComplete);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case ADD_TASK:
