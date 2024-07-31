@@ -5,6 +5,7 @@
 #include "taskTag.h"
 #include "loader.c"
 #include "saver.c"
+#include "console.h"
 
 #define EXIT_PROGRAM 0
 #define NOTHING 1
@@ -55,7 +56,8 @@ void printTaskPage(taskList* taskList, int page) {
     for(int i = startIndex; i < endIndex; i++) {
         taskRecord* currentTask = currentTaskNode->data;
         char* taskText = taskPrint(taskListGetTask(taskList, i));
-        printf("%d - %s\n", i, taskText);
+        //printf("%d - %s\n", i, taskText);
+        printLine("%d - %s", i, taskText);
         free(taskText);
         currentLines += 2;
         if(currentTask->hasDeadline) {
@@ -71,7 +73,10 @@ void printCurrentScreen(taskList* taskList, int page) {
     //clearScreen(currentLines);
     currentLines = 0;
     printTaskPage(taskList, page);
-    printf("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
+    printLine("\t\t<[p] Page %d/%d [n]>", page+1, totalPages);
+    printLine("--------------------------------------------------");
+    printLine(">");
+    printAll();
     currentLines += 4;
 }
 
