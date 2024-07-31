@@ -30,7 +30,8 @@ void printLine(char* linePattern, ...) {
 
 void clearScreen() {
     for(int i = 0; i < currentConsoleLines; i++) {
-        printf("\r\33[2K\r\33[1A\r");
+        printf("\r\x1b[2K\33[1A\r");
     }
+    printf("\r\x1b[2K");
     currentConsoleLines = 0;
 }
