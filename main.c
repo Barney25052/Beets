@@ -20,13 +20,7 @@
 #define MOVECURSORUP "033[A"  //moves the cursor up one line
 #define RETURNSTART "\r"  //goes to the start of the line
 
-int currentLines = 0;
 int currentPage = 0;
-
-void consolePrint(char* text) {
-    printf("%s", text);
-    currentLines += 1;
-}
 
 typedef struct {
     char commandType;
@@ -41,13 +35,6 @@ commandInfo* commandInfoCreate(char commandType, char* commandData, size_t comma
     commandInfo->commandDataLength = commandDataLength;
 }
 
-void clearScreen(int numberOfLines) {
-    for(int i = 0; i < numberOfLines; i++) {
-        printf("\r\33[2K\r\33[1A\r");
-    }
-    //printf("Clearing screen of %d lines\n", numberOfLines);
-}
-
 void printTaskPage(taskList* taskList, int page) {
     int startIndex = page * MAX_TASKS_PER_PAGE;
     int endIndex = startIndex + MAX_TASKS_PER_PAGE;
@@ -56,13 +43,8 @@ void printTaskPage(taskList* taskList, int page) {
     for(int i = startIndex; i < endIndex; i++) {
         taskRecord* currentTask = currentTaskNode->data;
         char* taskText = taskPrint(taskListGetTask(taskList, i));
-        //printf("%d - %s\n", i, taskText);
-        printLine("%d - %s", i, taskText);
+        printLine("%d - %s\n", i, taskText);
         free(taskText);
-        currentLines += 2;
-        if(currentTask->hasDeadline) {
-            currentLines ++;
-        }
         currentTaskNode = currentTaskNode->next;
     }
 }
@@ -70,14 +52,9 @@ void printTaskPage(taskList* taskList, int page) {
 
 void printCurrentScreen(taskList* taskList, int page) {
     int totalPages = taskList->count/MAX_TASKS_PER_PAGE + 1;
-    //clearScreen(currentLines);
-    currentLines = 0;
+    clearScreen();
     printTaskPage(taskList, page);
-    printLine("\t\t<[p] Page %d/%d [n]>", page+1, totalPages);
-    printLine("--------------------------------------------------");
-    printLine(">");
-    printAll();
-    currentLines += 4;
+    printLine("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
 }
 
 void readLine(char* output, int maxSize) {
@@ -93,26 +70,6 @@ void readLine(char* output, int maxSize) {
     }
     output[count] = 0;
 }
-
-taskRecord* getTaskFromInput(taskList* taskList, bool mustReturnVal) {
-    bool valid = false;
-    int choice;
-    do {
-        printf("Please enter a task to mark complete: ");
-        scanf("%d", &choice);
-        if(choice < taskList->count) {
-            valid = true;
-        }
-    } while(mustReturnVal && !valid);
-
-    if(!valid) {
-        printf("Invalid task selected!\n");
-        return NULL;
-    } else {
-        return taskListGetTask(taskList, choice);
-    }
-}
-
 //More advanced features
 //Dates and time on tasks
 //Tags/Categories
@@ -242,8 +199,7 @@ void addTagsToTask(taskTagCollection* collection, taskList* taskList) {
 }
 
 int main() {
-    printf("Welcome to Beets!\n");
-
+    printf("Welcome to Beets!\n\n");
     //Opening file.
 
     taskList* taskList = taskListCreate();
@@ -256,7 +212,6 @@ int main() {
 
     commandInfo* command = commandInfoCreate(NOTHING, NULL, 0);
     int taskNumber;
-
     printCurrentScreen(taskList, 0);
 
     while(command->commandType != EXIT_PROGRAM) {
@@ -278,7 +233,7 @@ int main() {
             case COMPLETE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
                 if(taskNumber < 0 || taskNumber >= taskList->count) {
-                    consolePrint("Invalid task number\n");
+                    printLine("Invalid task number\n");
                     break;
                 }
                 taskRecord* record = taskListGetTask(taskList, taskNumber);
@@ -293,7 +248,7 @@ int main() {
             case REMOVE_TASK:
                 sscanf(command->commandData, "%d", &taskNumber);
                 if(taskNumber < 0 || taskNumber >= taskList->count) {
-                    consolePrint("Invalid task number\n");
+                    printLine("Invalid task number\n");
                     break;
                 }
                 taskListRemoveAtIndex(taskList, taskNumber);
@@ -302,7 +257,7 @@ int main() {
             case EXIT_PROGRAM:
                 return 0;
             default:
-                consolePrint("Unkown command");
+                printLine("Unkown command");
                 break;
         }
         printCurrentScreen(taskList, currentPage);
