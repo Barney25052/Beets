@@ -13,7 +13,6 @@
 #define COMPLETE_TASK 3
 #define ADD_TASK 4
 #define REMOVE_TASK 5
-#define FILTER_TASKS 6
 
 #define MAX_TASKS_PER_PAGE 4
 
@@ -22,7 +21,6 @@
 #define RETURNSTART "\r"  //goes to the start of the line
 
 int currentPage = 0;
-taskTag* currentFilter = NULL;
 
 typedef struct {
     char commandType;
@@ -41,21 +39,12 @@ void printTaskPage(taskList* taskList, int page) {
     int startIndex = page * MAX_TASKS_PER_PAGE;
     int endIndex = startIndex + MAX_TASKS_PER_PAGE;
     endIndex = endIndex < taskList->count ? endIndex : taskList->count;
-    taskListNode* currentTaskNode = taskListGetNode(taskList, startIndex);
+    taskListNode* currentTaskNode = taskList->head;
     for(int i = startIndex; i < endIndex; i++) {
-        if(i >= taskList->count) {
-            break;
-        }
         taskRecord* currentTask = currentTaskNode->data;
-        if(tagCollectionContainsTag(currentTask->tags,  currentFilter)) {
-            char* taskText = taskPrint(currentTask);
-            printLine("%d - %s\n", i, taskText);
-            if(taskText != NULL) {
-                free(taskText);
-            }
-        } else {
-            endIndex++;
-        }
+        char* taskText = taskPrint(taskListGetTask(taskList, i));
+        printLine("%d - %s\n", i, taskText);
+        free(taskText);
         currentTaskNode = currentTaskNode->next;
     }
 }
@@ -193,10 +182,6 @@ commandInfo* parseCurrentCommand() {
         type = REMOVE_TASK;
         return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
     }
-    else if(strcmp("filter", typeAsText) == 0) {
-        type = FILTER_TASKS;
-        return commandInfoCreate(type, commandParts[1], strlen(commandParts[1]));
-    }
     return commandInfoCreate(-1, NULL, 0);
 }
 
@@ -223,12 +208,11 @@ int main() {
     taskTagCollection* tagCollection = tagCollectionCreate(0);
     tagCollectionLoadTag(tagCollection, "Homework");
     tagCollectionLoadTag(tagCollection, "Daily");
+    addTagsToTask(tagCollection, taskList);
 
     commandInfo* command = commandInfoCreate(NOTHING, NULL, 0);
     int taskNumber;
     printCurrentScreen(taskList, 0);
-
-    taskAddTag(taskListGetTask(taskList, 4), tagCollection->tags[0]);
 
     while(command->commandType != EXIT_PROGRAM) {
 
@@ -269,9 +253,6 @@ int main() {
                 }
                 taskListRemoveAtIndex(taskList, taskNumber);
                 saveData(FILE_LOCATION, taskList);
-                break;
-            case FILTER_TASKS:
-                currentFilter = tagCollectionFindTag(tagCollection, command->commandData);
                 break;
             case EXIT_PROGRAM:
                 return 0;
