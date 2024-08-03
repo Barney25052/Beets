@@ -11,11 +11,11 @@ taskListNode* taskNodeCreate(taskRecord* data) {
 }
 
 taskList* taskListCreate() {
-    taskList* taskList = malloc(sizeof(taskList));
-    taskList->count = 0;
-    taskList->head = NULL;
-    taskList->tail = NULL;
-    return taskList;
+    taskList* list = malloc(sizeof(taskList));
+    list->count = 0;
+    list->head = NULL;
+    list->tail = NULL;
+    return list;
 }
 
 void taskListPush(taskList* taskList, taskRecord* data) {
@@ -49,14 +49,24 @@ void taskListRemoveAtIndex(taskList* taskList, int index) {
         taskList->tail = taskToRemove->prev;
     }
     taskList->count --;
+    
+    free(taskToRemove->data->tags->tags);
+    free(taskToRemove->data->tags);
+    free(taskToRemove->data);
     free(taskToRemove);
 }
 
 taskRecord* taskListGetHead(taskList* taskList) {
+    if(taskList->head == NULL) {
+        return NULL;
+    }
     return taskList->head->data;
 }
 
 taskRecord* taskListGetTail(taskList* taskList) {
+    if(taskList->tail == NULL) {
+        return NULL;
+    }
     return taskList->tail->data;
 }
 
@@ -72,4 +82,22 @@ taskListNode* taskListGetNode(taskList* taskList, int index) {
 
 taskRecord* taskListGetTask(taskList* taskList, int index) {
     return taskListGetNode(taskList, index)->data;
+}
+
+void taskListClean(taskList* taskList) {
+    taskListNode* currentNode = taskListGetNode(taskList, 0);
+
+    if(currentNode == NULL) {
+        return;
+    }
+
+    for(int i = 0; i < taskList->count; i++) {
+        free(currentNode->data->tags->tags);
+        free(currentNode->data->tags);
+        free(currentNode->data);
+        taskListNode* nextNode = currentNode->next;
+        free(currentNode);
+        currentNode = nextNode;
+    }
+    free(taskList);
 }

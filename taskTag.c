@@ -6,7 +6,7 @@
 void taskTagSetName(taskTag* tag, char* name) {
     int length = strlen(name);
     if(length > 16) {
-        return;
+        length = 16;
     }
 
     int i = 0;
@@ -17,9 +17,9 @@ void taskTagSetName(taskTag* tag, char* name) {
 }
 
 taskTag* taskTagCreate(char* name) {
-    taskTag* taskTag = malloc(sizeof(taskTag));
-    taskTagSetName(taskTag, name);
-    return taskTag;
+    taskTag* tag = malloc(sizeof(taskTag));
+    taskTagSetName(tag, name);
+    return tag;
 }
 
 taskTagCollection* tagCollectionCreate(int size) {
@@ -55,4 +55,12 @@ bool tagCollectionContainsTag(taskTagCollection* collection, taskTag* tag) {
         }
     }
     return false;
+}
+
+void taskTagCollectionClean(taskTagCollection* collection) {
+    for(int i = 0; i < collection->numberOfTags; i++) {
+        free(collection->tags[i]);
+    }
+    free(collection->tags);
+    free(collection);
 }

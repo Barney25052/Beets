@@ -28,4 +28,6 @@ void tagCollectionLoadTag(taskTagCollection* collection, char*name);
 
 bool tagCollectionContainsTag(taskTagCollection* collection, taskTag* tag);
 
+void taskTagCollectionClean(taskTagCollection* collection);
+
 #endif

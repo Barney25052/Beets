@@ -9,6 +9,7 @@ taskRecord* taskCreate(char* text) {
     taskSetTask(task, text);
     task->isComplete = false;
     task->hasDeadline = false;
+    task->deadline = 0;
     task->tags = tagCollectionCreate(0);
     return task;
 }
@@ -39,15 +40,30 @@ void taskSetDeadlineFromTime(taskRecord* task, int year, int month, int day, int
     task->hasDeadline = true;
 }
 
-char* taskPrint(taskRecord* task) {
-    char* taskString = malloc((strlen(task->text)+4+(task->hasDeadline?24:0)) * sizeof(char));
-    sprintf(taskString, "[%c] %s", task->isComplete ? 'X' : ' ', task->text);
-    if(task->hasDeadline) {
-        char* dateString = timeAsString(task->deadline);
-        sprintf(taskString, "%s\n\t%s", taskString, dateString);
-        free(dateString);
+char* taskGetDeadlineString(taskRecord* task) {
+    if(!task) {
+        return "";
     }
-    sprintf(taskString, "%s\n", taskString);
+    if(!task->hasDeadline) {
+        return "";
+    }
+    char* timeString = timeAsString(task->deadline);
+    char* deadlineString = malloc(24 * sizeof(char));
+    sprintf(deadlineString, "\n\t %s", timeString);
+    free(timeString);
+    return deadlineString;
+}
+
+char* taskPrint(taskRecord* task) {
+    if(!task) {
+        return "Error Loading Task\n";
+    }
+    char* taskString = malloc(128 * sizeof(char));
+    char* deadlineString = taskGetDeadlineString(task);
+    sprintf(taskString, "[%c] %s%s\n", task->isComplete ? 'X' : ' ', task->text, deadlineString);
+    if(deadlineString != "") {
+        free(deadlineString);
+    }
     return taskString;
 }
 

@@ -6,7 +6,7 @@
 #include "time.h"
 
 char* parseTaskSegmentInformation(char* segmentData, int size) {
-    char* parsedData = malloc((size-1) * sizeof(char));
+    char* parsedData = malloc((size) * sizeof(char));
     for(int i = 1; i < size; i++) {
         parsedData[i-1] = segmentData[i];
     }
@@ -21,21 +21,20 @@ void parseTask(char* data, int size, taskList* taskList) {
     }
 
     char dataType = data[0];
-    taskRecord* mostRecentTask;
+    taskRecord* mostRecentTask = taskListGetTail(taskList);
     switch(dataType) {
         case TASK_INFO:
             char* taskInfo = parseTaskSegmentInformation(data, size);
             taskRecord* task = taskCreate(taskInfo);
             taskListPush(taskList,task);
+            mostRecentTask = task;
             free(taskInfo);
             break;
         case TASK_COMPLETED:
-            mostRecentTask = taskListGetTail(taskList);
             if(mostRecentTask == NULL) {break;}
             taskSetComplete(mostRecentTask, task);
             break;
         case TASK_DEADLINE:
-            mostRecentTask = taskListGetTail(taskList);
             if(mostRecentTask == NULL) {break;}
             char* dateText = parseTaskSegmentInformation(data, size);
             int deadline = atoi(dateText); 
@@ -50,7 +49,7 @@ void parseTask(char* data, int size, taskList* taskList) {
 
 }
 
-char* readPart(FILE* filePtr, taskList* taskList) {
+char* readPart(FILE* filePtr) {
 
     int bufferSize = 256;
     char* buffer = calloc(bufferSize, sizeof(char));
@@ -82,12 +81,13 @@ void readFileIntoTaskList(const char* fileLocation, taskList* taskList) {
 
     bool isEndOfFile = false;
     while(!isEndOfFile) {
-        char* buffer = readPart(filePtr, taskList);
+        char* buffer = readPart(filePtr);
         if(buffer[0] == 0) {
             isEndOfFile = true;
         } else {
             parseTask(buffer, strlen(buffer), taskList);
         }
+        free(buffer);
     }
 
     fclose(filePtr);
