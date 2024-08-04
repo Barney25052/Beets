@@ -256,6 +256,11 @@ void getCommandFromUser(commandInfo* command) {
     char** splitInput = splitUserInput(userInputLine, &numberOfParts);
     free(userInputLine);
 
+    if(numberOfParts == 0) {
+        command->commandType = NOTHING;
+        return;
+    }
+
     generateCommand(command, splitInput, numberOfParts);
     for(int i = 0; i < numberOfParts; i++) {
         if(!splitInput[i]) {
