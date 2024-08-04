@@ -20,6 +20,7 @@
 #define COMPLETE_TASK 'x'
 #define ADD_TASK 'a'
 #define REMOVE_TASK 'r'
+#define DATE_TASK 'd'
 
 #define MAX_TASKS_PER_PAGE 4
 
@@ -183,6 +184,9 @@ char tokenizeCommand(char* commandWord) {
     if(strcmp(commandWord, "exit") == 0 || strcmp(commandWord, "e") == 0 || strcmp(commandWord, "quit") == 0 || strcmp(commandWord, "q") == 0) {
         return EXIT_PROGRAM;
     }
+    if(strcmp(commandWord, "datetask") == 0 || strcmp(commandWord, "dt") == 0 || strcmp(commandWord, "date") == 0) {
+        return DATE_TASK;
+    }
     return NOTHING;
 }
 
@@ -191,13 +195,15 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
     char commandToken = tokenizeCommand(commandWord);
     commandInfo->commandType = commandToken;
 
+
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    int hour = 0;
+    int minute = 0;
+
     switch(commandToken) {
         case ADD_TASK:
-            int year = 0;
-            int month = 0;
-            int day = 0;
-            int hour = 0;
-            int minute = 0;
             char* taskText = "\0";
             switch(numberOfParts) {
                 case 7:
@@ -245,6 +251,34 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             commandInfo->number = atoi(commandParts[1]);
             if(commandInfo->number > 0) {
                 commandInfo->number -= 1;
+            }
+            break;
+        case DATE_TASK:
+            int taskNumber = 0;
+            switch(numberOfParts) {
+                case 7:
+                    minute = atoi(commandParts[6]);
+                case 6:
+                    hour = atoi(commandParts[5]);
+                case 5:
+                    day = atoi(commandParts[4]);
+                case 4:
+                    month = atoi(commandParts[3]);
+                case 3:
+                    year = atoi(commandParts[2]);
+                    taskNumber = atoi(commandParts[1]);
+                    commandInfo->number = timeCreate(year,month,day,hour,minute);
+                    if(strcmp(commandParts[2], "remove") == 0 ) {
+                        commandInfo->number = -2;
+                    }
+                    if(taskNumber == 0 && strcmp(commandParts[1], "0") != 0) {
+                        commandInfo->number = -1;
+                        break;
+                    }
+                    commandInfoSetText(commandInfo, commandParts[1]);
+                    break;
+                default:
+                    commandInfo->commandType = NOTHING;
             }
             break;
     }
@@ -330,10 +364,30 @@ int main() {
                 taskListRemoveAtIndex(taskList, taskNumber);
                 saveData(FILE_LOCATION, taskList);
                 break;
+            case DATE_TASK:
+                if(command->number == -1) {
+                    printLine("Invalid task number\n");
+                    break;
+                }
+                int taskNumber = atoi(command->text);
+                if(taskNumber < 0 || taskNumber > taskList->count) {
+                    printLine("Invalid task number\n");
+                    break;
+                }
+                taskRecord* task = taskListGetTask(taskList, taskNumber);
+
+                if(command->number == -2) {
+                    task->hasDeadline = false;
+                    task->deadline = 0;
+                    break;   
+                }
+                taskSetDeadline(task, command->number);
+                saveData(FILE_LOCATION, taskList);
+                break;
             case EXIT_PROGRAM:
                 break;
             default:
-                printLine("Unknown command");
+                printLine("Unknown command\n");
                 break;
         }
         printCurrentScreen(taskList, currentPage);
