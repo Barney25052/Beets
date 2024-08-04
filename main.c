@@ -64,7 +64,7 @@ void printTaskPage(taskList* taskList, int page) {
 }
 
 void printCurrentScreen(taskList* taskList, int page) {
-    int totalPages = taskList->count/MAX_TASKS_PER_PAGE + 1;
+    int totalPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
     //clearScreen();
     printTaskPage(taskList, page);
     printLine("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
@@ -129,14 +129,14 @@ char** splitUserInput(char* userInput, int* numberOfParts) {
         numberOfSpaces --;
     }
     *numberOfParts = numberOfSpaces+1;
-    splitInput = malloc(*numberOfParts * sizeof(char*)); //NOT FREED
+    splitInput = malloc(*numberOfParts * sizeof(char*));
     nonSpaceCharacter = false;
 
     int j = 0;
     inText = false;
 
     for(int i = 0; i < *numberOfParts; i++) {
-        splitInput[i] = malloc(128 * sizeof(char)); //NOT FREED
+        splitInput[i] = malloc(128 * sizeof(char)); 
         currentChar = userInput[j];
         int k = 0;
         while((userInput[j] != ' ' || inText) && userInput[j] != '\n') {
@@ -243,6 +243,9 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
                 break;
             }
             commandInfo->number = atoi(commandParts[1]);
+            if(commandInfo->number > 0) {
+                commandInfo->number -= 1;
+            }
             break;
     }
 
@@ -289,7 +292,7 @@ int main() {
     command->commandType = NOTHING;
     while(command->commandType != EXIT_PROGRAM) {
         getCommandFromUser(command);
-        int maxPages = (taskList->count/MAX_TASKS_PER_PAGE) + 1;
+        int maxPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
         switch(command->commandType) {
             case VIEW_TASKS:
                 currentPage = command->number;
