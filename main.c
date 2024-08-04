@@ -21,6 +21,8 @@
 #define ADD_TASK 'a'
 #define REMOVE_TASK 'r'
 #define DATE_TASK 'd'
+#define NEXT 'n'
+#define PREV 'p'
 
 #define MAX_TASKS_PER_PAGE 4
 
@@ -169,6 +171,7 @@ char tokenizeCommand(char* commandWord) {
         return 0;
     }
 
+    //This feels wholly inefficient but I dont know a better way to do it
     if(strcmp(commandWord, "add") == 0 || strcmp(commandWord, "new") == 0|| strcmp(commandWord, "a") == 0) {
         return ADD_TASK;
     }
@@ -186,6 +189,12 @@ char tokenizeCommand(char* commandWord) {
     }
     if(strcmp(commandWord, "datetask") == 0 || strcmp(commandWord, "dt") == 0 || strcmp(commandWord, "date") == 0) {
         return DATE_TASK;
+    }
+    if(strcmp(commandWord, "next") == 0 || strcmp(commandWord, "n") == 0) {
+        return NEXT;
+    }
+    if(strcmp(commandWord, "prev") == 0 || strcmp(commandWord, "p") == 0) {
+        return PREV;
     }
     return NOTHING;
 }
@@ -252,6 +261,14 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             if(commandInfo->number > 0) {
                 commandInfo->number -= 1;
             }
+            break;
+        case NEXT:
+            commandInfo->commandType = VIEW_TASKS;
+            commandInfo->number = currentPage + 1;
+            break;
+        case PREV:
+            commandInfo->commandType = VIEW_TASKS;
+            commandInfo->number = currentPage - 1;
             break;
         case DATE_TASK:
             int taskNumber = 0;
@@ -379,9 +396,9 @@ int main() {
                 if(command->number == -2) {
                     task->hasDeadline = false;
                     task->deadline = 0;
-                    break;   
+                } else {
+                    taskSetDeadline(task, command->number);
                 }
-                taskSetDeadline(task, command->number);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case EXIT_PROGRAM:
