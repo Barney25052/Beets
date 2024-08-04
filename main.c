@@ -97,6 +97,7 @@ char** splitUserInput(char* userInput, int* numberOfParts) {
     int numberOfSpaces = 0;
     int userInputLength = strlen(userInput);
     bool nonSpaceCharacter = false;
+    bool inText = false;
     char currentChar;
     char** splitInput;
 
@@ -109,11 +110,19 @@ char** splitUserInput(char* userInput, int* numberOfParts) {
         currentChar = userInput[i];
         if(currentChar != ' ' && currentChar != '\n') {
             nonSpaceCharacter = true;
+            if(currentChar == '"') {
+                inText = !inText;
+            }
         }
-        else if(nonSpaceCharacter) {
+        else if(nonSpaceCharacter && !inText) {
             numberOfSpaces++;
             nonSpaceCharacter = false;
         }
+    }
+
+    if(inText) {
+        *numberOfParts = 0;
+        return NULL;
     }
 
     if(!nonSpaceCharacter) {
@@ -124,12 +133,18 @@ char** splitUserInput(char* userInput, int* numberOfParts) {
     nonSpaceCharacter = false;
 
     int j = 0;
+    inText = false;
 
     for(int i = 0; i < *numberOfParts; i++) {
         splitInput[i] = malloc(128 * sizeof(char)); //NOT FREED
         currentChar = userInput[j];
         int k = 0;
-        while(userInput[j] != ' ' && userInput[j] != '\n') {
+        while((userInput[j] != ' ' || inText) && userInput[j] != '\n') {
+            if(userInput[j] == '"') {
+                inText = !inText;
+                j++;
+                continue;
+            }
             splitInput[i][k] = userInput[j];
             j ++;
             k ++;
