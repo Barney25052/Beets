@@ -23,11 +23,19 @@
 #define DATE_TASK 'd'
 #define NEXT 'n'
 #define PREV 'p'
+#define CREATETAG 'c'
+#define ADDTAG 't'
+#define DELETETAG '-'
+#define FILTER 'f'
+#define SORT 's'
 
 #define MAX_TASKS_PER_PAGE 4
 
 int currentPage = 0;
 const char* FILE_LOCATION = "/home/ryan-bell/Documents/Beets/notes.txt";
+const char* TAG_LOCATION = "/home/ryan-bell/Documents/Beets/tags.txt";
+
+int currentNumberOfPages = 0;
 
 struct commandInfo {
     char commandType;
@@ -67,10 +75,9 @@ void printTaskPage(taskList* taskList, int page) {
 }
 
 void printCurrentScreen(taskList* taskList, int page) {
-    int totalPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
     //clearScreen();
     printTaskPage(taskList, page);
-    printLine("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, totalPages);
+    printLine("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, currentNumberOfPages);
 }
 
 //Must be freed by caller
@@ -196,6 +203,13 @@ char tokenizeCommand(char* commandWord) {
     if(strcmp(commandWord, "prev") == 0 || strcmp(commandWord, "p") == 0) {
         return PREV;
     }
+    if(strcmp(commandWord, "createtag") == 0 || strcmp(commandWord, "tc") == 0 || strcmp(commandWord, "tagcreate") == 0) {
+        return CREATETAG;
+    }
+    if(strcmp(commandWord, "tagadd") == 0 || strcmp(commandWord, "tag") == 0 || strcmp(commandWord, "ta") == 0 || strcmp(commandWord, "addTag") == 0 || strcmp(commandWord, "t") == 0) {
+        return ADDTAG;
+    }
+    
     return NOTHING;
 }
 
@@ -298,6 +312,22 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
                     commandInfo->commandType = NOTHING;
             }
             break;
+        case CREATETAG:
+            if(numberOfParts != 2) {
+                break;
+            }
+            commandInfoSetText(commandInfo, commandParts[1]);
+            break;
+        case ADDTAG:
+            if(numberOfParts != 3) {
+                break;
+            }
+            commandInfo->number = atoi(commandParts[1]);
+            if(commandInfo->number == 0 && strcmp(commandParts[1], "0") != 0) {
+                commandInfo->number = -1;
+            }
+            commandInfoSetText(commandInfo, commandParts[2]);
+            break;
     }
 
 }
@@ -329,26 +359,28 @@ int main() {
     //Opening file.
 
     taskList* taskList = taskListCreate();
-    readFileIntoTaskList(FILE_LOCATION, taskList);
-    
+
     taskTagCollection* tagCollection = tagCollectionCreate(0);
-    tagCollectionLoadTag(tagCollection, "Homework");
-    tagCollectionLoadTag(tagCollection, "Daily");
-    
+    readFileIntoTagCollection(TAG_LOCATION, tagCollection);
+
+    readFileIntoTaskList(FILE_LOCATION, taskList, tagCollection);
+
+    currentNumberOfPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
+
     int taskNumber;
     printCurrentScreen(taskList, 0);
 
     printf(">");
     commandInfo* command = malloc(sizeof(commandInfo));
+    taskRecord* task;
     command->commandType = NOTHING;
     while(command->commandType != EXIT_PROGRAM) {
         getCommandFromUser(command);
-        int maxPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
         switch(command->commandType) {
             case VIEW_TASKS:
                 currentPage = command->number;
-                if(currentPage >= maxPages-1) {
-                    currentPage = maxPages-1;
+                if(currentPage >= currentNumberOfPages-1) {
+                    currentPage = currentNumberOfPages-1;
                 } 
                 if(currentPage < 0) {
                     currentPage = 0;
@@ -360,16 +392,16 @@ int main() {
                     printLine("Invalid task number\n");
                     break;
                 }
-                taskRecord* record = taskListGetTask(taskList, taskNumber);
-                taskSetComplete(record,!record->isComplete);
+                task = taskListGetTask(taskList, taskNumber);
+                taskSetComplete(task,!task->isComplete);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case ADD_TASK:
-                taskRecord* newTask = taskCreate(command->text);
+                task = taskCreate(command->text);
                 if(command->number > 0) {
-                    taskSetDeadline(newTask, command->number);
+                    taskSetDeadline(task, command->number);
                 }
-                taskListPush(taskList, newTask);
+                taskListPush(taskList, task);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case REMOVE_TASK:
@@ -391,7 +423,7 @@ int main() {
                     printLine("Invalid task number\n");
                     break;
                 }
-                taskRecord* task = taskListGetTask(taskList, taskNumber);
+                task = taskListGetTask(taskList, taskNumber);
 
                 if(command->number == -2) {
                     task->hasDeadline = false;
@@ -401,12 +433,31 @@ int main() {
                 }
                 saveData(FILE_LOCATION, taskList);
                 break;
+            case CREATETAG:
+                tagCollectionLoadTag(tagCollection, command->text);
+                saveTags(TAG_LOCATION, tagCollection);
+                break;
+            case ADDTAG:
+                if(command->number < 0 || command->number > command->number > taskList->count) {
+                    printLine("Invalid task number\n");
+                    break;
+                }
+                task = taskListGetTask(taskList, command->number);
+                taskTag* tag = tagCollectionGetTagFromName(tagCollection, command->text);
+                if(tag == NULL) {
+                    printLine("Tag %s does not exist\n", command->text);
+                    break;
+                }
+                taskAddTag(task, tag);
+                saveData(FILE_LOCATION, taskList);
+                break;
             case EXIT_PROGRAM:
                 break;
             default:
                 printLine("Unknown command\n");
                 break;
         }
+        currentNumberOfPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
         printCurrentScreen(taskList, currentPage);
     }
 

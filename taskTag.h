@@ -26,6 +26,8 @@ void tagCollectionAddTag(taskTagCollection* collection, taskTag* tag);
 
 void tagCollectionLoadTag(taskTagCollection* collection, char*name);
 
+taskTag* tagCollectionGetTagFromName(taskTagCollection* collection, char* name);
+
 bool tagCollectionContainsTag(taskTagCollection* collection, taskTag* tag);
 
 void taskTagCollectionClean(taskTagCollection* collection);

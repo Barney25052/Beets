@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "taskList.h"
+#include "taskTag.h"
 #include "taskRecord.h"
 #include "serialization.h"
 #include "time.h"
@@ -14,7 +15,7 @@ char* parseTaskSegmentInformation(char* segmentData, int size) {
     return parsedData;
 }
 
-void parseTask(char* data, int size, taskList* taskList) {
+void parseTask(char* data, int size, taskList* taskList, taskTagCollection* tagCollection) {
 
     if(size == 0) {
         return;
@@ -42,6 +43,13 @@ void parseTask(char* data, int size, taskList* taskList) {
             mostRecentTask->hasDeadline = true;
             free(dateText);
             break;
+        case TASK_TAG:
+            if(mostRecentTask == NULL) {break;}
+            char* tagText = parseTaskSegmentInformation(data, size);
+            taskTag* tag = tagCollectionGetTagFromName(tagCollection, tagText);
+            free(tagText);
+            if(tag == NULL) {break;}
+            taskAddTag(mostRecentTask, tag);
         default:
             break;
 
@@ -70,7 +78,7 @@ char* readPart(FILE* filePtr) {
     return buffer;
 }
 
-void readFileIntoTaskList(const char* fileLocation, taskList* taskList) {
+void readFileIntoTaskList(const char* fileLocation, taskList* taskList, taskTagCollection* tagCollection) {
     FILE* filePtr;
     filePtr = fopen(fileLocation, "r");
 
@@ -85,10 +93,32 @@ void readFileIntoTaskList(const char* fileLocation, taskList* taskList) {
         if(buffer[0] == 0) {
             isEndOfFile = true;
         } else {
-            parseTask(buffer, strlen(buffer), taskList);
+            parseTask(buffer, strlen(buffer), taskList, tagCollection);
         }
         free(buffer);
     }
 
+    fclose(filePtr);
+}
+
+void readFileIntoTagCollection(const char* fileLocation, taskTagCollection* tagCollection) {
+    FILE* filePtr;
+    filePtr = fopen(fileLocation, "r");
+
+    if(filePtr == NULL) {
+        printf("File at location %s can not be found", fileLocation);
+        return;
+    }
+
+    bool isEndOfFile = false;
+    while(!isEndOfFile) {
+        char* buffer = readPart(filePtr);
+        if(buffer[0] == 0) {
+            isEndOfFile = true;
+        } else {
+            tagCollectionLoadTag(tagCollection, buffer);
+        }
+        free(buffer);
+    }
     fclose(filePtr);
 }

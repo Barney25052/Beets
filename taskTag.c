@@ -29,6 +29,15 @@ taskTagCollection* tagCollectionCreate(int size) {
     tagCollection->numberOfTags = 0;
 }
 
+taskTag* tagCollectionGetTagFromName(taskTagCollection* collection, char* name) {
+    for(int i = 0; i < collection->numberOfTags; i++) {
+        if(strcmp(collection->tags[i]->name, name) == 0) {
+            return collection->tags[i];
+        }
+    } 
+    return NULL;
+}
+
 void tagCollectionResize(taskTagCollection* collection) {
     if(collection->numberOfTags < collection->currentSize) {
         return;

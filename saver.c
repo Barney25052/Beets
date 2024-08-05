@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include "taskTag.h"
 #include "taskList.h"
 #include "taskRecord.h"
 #include "serialization.h"
@@ -41,7 +42,35 @@ void saveData(const char* fileLocation, taskList* taskList) {
             free(deadline);
         }
 
+        //Add Tags
+        int numberOfTags = currentTask->tags->numberOfTags;
+        for(int i = 0; i < numberOfTags; i++) {
+            char* tagText = currentTask->tags->tags[i]->name;
+            int textSize = strlen(tagText);
+            fputc(TASK_TAG, fileptr);
+            for(int j = 0; j < textSize; j++) {
+                fputc(tagText[j], fileptr);
+            }
+            fputc('\n', fileptr);
+        }
+
         currentNode = currentNode->next;
+    }
+
+    fclose(fileptr);
+}
+
+void saveTags(const char* fileLocation, taskTagCollection* tagCollection) {
+    FILE* fileptr = fopen(fileLocation, "w");
+    int numberOfTags = tagCollection->numberOfTags;
+
+    for(int i = 0; i < numberOfTags; i++) {
+        char* tagText = tagCollection->tags[i]->name;
+        int textSize = strlen(tagText);
+        for(int j = 0; j < textSize; j++) {
+            fputc(tagText[j], fileptr);
+        }
+        fputc('\n', fileptr);
     }
 
     fclose(fileptr);
