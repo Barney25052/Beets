@@ -14,12 +14,13 @@
 #include "saver.c"
 #include "console.h"
 
-#define EXIT_PROGRAM 'e'
+#define EXIT_PROGRAM 'q'
 #define NOTHING ' '
 #define VIEW_TASKS 'v'
 #define COMPLETE_TASK 'x'
 #define ADD_TASK 'a'
 #define REMOVE_TASK 'r'
+#define EDIT_TASK 'e'
 #define DATE_TASK 'd'
 #define NEXT 'n'
 #define PREV 'p'
@@ -188,6 +189,9 @@ char tokenizeCommand(char* commandWord) {
     if(strcmp(commandWord, "complete") == 0 || strcmp(commandWord, "x") == 0 || strcmp(commandWord, "mark") == 0) {
         return COMPLETE_TASK;
     }
+    if(strcmp(commandWord, "edit") == 0 || strcmp(commandWord, "e") == 0) {
+        return EDIT_TASK;
+    }
     if(strcmp(commandWord, "view") == 0 || strcmp(commandWord, "v") == 0) {
         return VIEW_TASKS;
     }
@@ -244,13 +248,14 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
                     commandInfo->number = timeCreate(year,month,day,hour,minute);
                     commandInfoSetText(commandInfo, taskText);
                     break;
-                case 1:
+                default:
                     commandInfo->commandType = NOTHING;
             }
             break;
         case REMOVE_TASK:
             //TODO add remove by tag
             if(numberOfParts != 2) {
+                commandInfo->commandType = NOTHING;
                 break;
             }
             commandInfo->number = atoi(commandParts[1]);
@@ -258,8 +263,20 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
                 commandInfo->number = -1;
             }
             break;
+        case EDIT_TASK:
+            if(numberOfParts != 3) {
+                commandInfo->commandType = NOTHING;
+                break;
+            }            
+            commandInfo->number = atoi(commandParts[1]);
+            if(commandInfo->number == 0 && strcmp(commandParts[1], "0") != 0) {
+                commandInfo->number = -1;
+            }
+            commandInfoSetText(commandInfo, commandParts[2]);
+            break;
         case COMPLETE_TASK:
             if(numberOfParts != 2) {
+                commandInfo->commandType = NOTHING;
                 break;
             }
             commandInfo->number = atoi(commandParts[1]);
@@ -269,6 +286,7 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             break;
         case VIEW_TASKS:
             if(numberOfParts != 2) {
+                commandInfo->commandType = NOTHING;
                 break;
             }
             commandInfo->number = atoi(commandParts[1]);
@@ -329,7 +347,6 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             commandInfoSetText(commandInfo, commandParts[2]);
             break;
     }
-
 }
 
 void getCommandFromUser(commandInfo* command) {
@@ -411,6 +428,15 @@ int main() {
                     break;
                 }
                 taskListRemoveAtIndex(taskList, taskNumber);
+                saveData(FILE_LOCATION, taskList);
+                break;
+            case EDIT_TASK:
+                if(command->number < 0 || command->number > taskList->count) {
+                    printLine("Invalid task number\n");
+                    break;
+                }
+                task = taskListGetTask(taskList, command->number);
+                taskSetTask(task, command->text);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case DATE_TASK:

@@ -27,7 +27,7 @@ Commands:
 
     reset "tagname"             Unmarks a task with tag             rst, undo, u
 
-    edit index "task"           Sets the task at index to have      edt, e
+    edit index "task"           Sets the task at index to have      e
                                 the text "task"
 
     view num                    Switches to num page                v 
