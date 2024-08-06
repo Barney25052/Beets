@@ -58,6 +58,9 @@ void tagCollectionLoadTag(taskTagCollection* collection, char* name) {
 }
 
 bool tagCollectionContainsTag(taskTagCollection* collection, taskTag* tag) {
+    if(tag == NULL) {
+        return true;
+    }
     for(int i = 0; i < collection->numberOfTags; i++) {
         if(tag == collection->tags[i]) {
             return true;

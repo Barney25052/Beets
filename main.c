@@ -38,6 +38,8 @@ const char* FILE_LOCATION = "/home/ryan-bell/Documents/Beets/notes.txt";
 const char* TAG_LOCATION = "/home/ryan-bell/Documents/Beets/tags.txt";
 
 int currentNumberOfPages = 0;
+int numberOfFilteredTasks;
+taskTag* currentFilter;
 
 struct commandInfo {
     char commandType;
@@ -62,16 +64,46 @@ void commandInfoSetText(commandInfo* command, char* text) {
     command->text[i] = 0;
 }
 
+int countFilteredTasks(taskList* taskList) {
+    if(currentFilter == NULL) {
+        return taskList->count;
+    }
+    taskListNode* currentNode = taskListGetNode(taskList, 0);
+    int runningCount = 0;
+    for(int i = 0; i < taskList->count; i++) {
+        if(tagCollectionContainsTag(currentNode->data->tags, currentFilter)) {
+            runningCount ++;
+        }
+        currentNode = currentNode->next;
+    }
+    return runningCount;
+}
+
 void printTaskPage(taskList* taskList, int page) {
-    int startIndex = page * MAX_TASKS_PER_PAGE;
+    int startIndex = currentFilter == NULL ? page * MAX_TASKS_PER_PAGE : 0;
+    int filterIndex = 0;
     int endIndex = startIndex + MAX_TASKS_PER_PAGE;
-    endIndex = endIndex < taskList->count ? endIndex : taskList->count;
+    int maxTasks = countFilteredTasks(taskList);
+    endIndex = endIndex < maxTasks ? endIndex : maxTasks;
+    numberOfFilteredTasks = maxTasks;
     taskListNode* currentTaskNode = taskListGetNode(taskList, startIndex);
     for(int i = startIndex; i < endIndex; i++) {
+        if(currentTaskNode == NULL) {
+            break;
+        }
         taskRecord* currentTask = currentTaskNode->data;
-        char* taskText = taskPrint(currentTask);
-        printLine("%d - %s\n", i, taskText);
-        free(taskText);
+        if(tagCollectionContainsTag(currentTask->tags, currentFilter)) {
+            if(currentFilter != NULL && filterIndex < MAX_TASKS_PER_PAGE * page) {
+                filterIndex++;
+                endIndex ++;
+            } else {
+                char* taskText = taskPrint(currentTask);
+                printLine("%d - %s\n", i, taskText);
+                free(taskText);
+            }
+        } else {
+            endIndex++;
+        }
         currentTaskNode = currentTaskNode->next;
     }
 }
@@ -79,6 +111,7 @@ void printTaskPage(taskList* taskList, int page) {
 void printCurrentScreen(taskList* taskList, int page) {
     //clearScreen();
     printTaskPage(taskList, page);
+    currentNumberOfPages = (numberOfFilteredTasks/MAX_TASKS_PER_PAGE) + (numberOfFilteredTasks % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
     printLine("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, currentNumberOfPages);
 }
 
@@ -216,6 +249,9 @@ char tokenizeCommand(char* commandWord) {
     }
     if(strcmp(commandWord, "untag") == 0) {
         return UNTAG;
+    }
+    if(strcmp(commandWord, "filter") == 0 || strcmp(commandWord, "f") == 0) {
+        return FILTER;
     }
     
     return NOTHING;
@@ -360,6 +396,14 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             if(commandInfo->number == 0 && strcmp(commandParts[1], "0") != 0) {
                 commandInfo->number = -1;
             }
+            break;
+        case FILTER:
+            if(numberOfParts != 2) {
+                commandInfo->commandType = NOTHING;
+                break;
+            }
+            commandInfoSetText(commandInfo, commandParts[1]);
+            break;
     }
 }
 
@@ -497,9 +541,16 @@ int main() {
                     break;
                 }
                 task = taskListGetTask(taskList, command->number);
-                taskTagCollectionClean(task->tags);
-                task->tags = tagCollectionCreate(0);
+                task->tags->currentSize = 0;
+                task->tags->numberOfTags = 0;
                 saveData(FILE_LOCATION, taskList);
+                break;
+            case FILTER:
+                currentFilter = tagCollectionGetTagFromName(tagCollection, command->text);
+                if(currentFilter == NULL) {
+                    printLine("Invalid tag: %s\n", command->text);
+                }
+                currentPage = 0;
                 break;
             case EXIT_PROGRAM:
                 break;
@@ -507,7 +558,6 @@ int main() {
                 printLine("Unknown command\n");
                 break;
         }
-        currentNumberOfPages = (taskList->count/MAX_TASKS_PER_PAGE) + (taskList->count % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
         printCurrentScreen(taskList, currentPage);
     }
 
