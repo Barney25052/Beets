@@ -27,6 +27,7 @@
 #define CREATETAG 'c'
 #define ADDTAG 't'
 #define DELETETAG '-'
+#define UNTAG 'u'
 #define FILTER 'f'
 #define SORT 's'
 
@@ -210,8 +211,11 @@ char tokenizeCommand(char* commandWord) {
     if(strcmp(commandWord, "createtag") == 0 || strcmp(commandWord, "tc") == 0 || strcmp(commandWord, "tagcreate") == 0) {
         return CREATETAG;
     }
-    if(strcmp(commandWord, "tagadd") == 0 || strcmp(commandWord, "tag") == 0 || strcmp(commandWord, "ta") == 0 || strcmp(commandWord, "addTag") == 0 || strcmp(commandWord, "t") == 0) {
+    if(strcmp(commandWord, "tagadd") == 0 || strcmp(commandWord, "tag") == 0 || strcmp(commandWord, "ta") == 0 || strcmp(commandWord, "addtag") == 0 || strcmp(commandWord, "t") == 0) {
         return ADDTAG;
+    }
+    if(strcmp(commandWord, "untag") == 0) {
+        return UNTAG;
     }
     
     return NOTHING;
@@ -338,6 +342,7 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             break;
         case ADDTAG:
             if(numberOfParts != 3) {
+                commandInfo->commandType = NOTHING;
                 break;
             }
             commandInfo->number = atoi(commandParts[1]);
@@ -346,6 +351,15 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             }
             commandInfoSetText(commandInfo, commandParts[2]);
             break;
+        case UNTAG:
+            if(numberOfParts != 2) {
+                commandInfo->commandType = NOTHING;
+                break;
+            }
+            commandInfo->number = atoi(commandParts[1]);
+            if(commandInfo->number == 0 && strcmp(commandParts[1], "0") != 0) {
+                commandInfo->number = -1;
+            }
     }
 }
 
@@ -475,6 +489,16 @@ int main() {
                     break;
                 }
                 taskAddTag(task, tag);
+                saveData(FILE_LOCATION, taskList);
+                break;
+            case UNTAG:
+                if(command->number < 0 || command->number > command->number > taskList->count) {
+                    printLine("Invalid task number\n");
+                    break;
+                }
+                task = taskListGetTask(taskList, command->number);
+                taskTagCollectionClean(task->tags);
+                task->tags = tagCollectionCreate(0);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case EXIT_PROGRAM:

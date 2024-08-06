@@ -39,9 +39,6 @@ Commands:
     createtag "tagname"         Creates a new tag with name         createtag, tc   
                                 "tagname"
 
-    deltag "tagname"            Deletes tag with specified          td
-                                name
-
     tag index "tagname"         Gives task at index the tag         addtag, ta, t
                                 specified, if tag does not 
                                 exist it is created
