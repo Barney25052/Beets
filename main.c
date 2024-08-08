@@ -31,7 +31,7 @@
 #define FILTER 'f'
 #define SORT 's'
 
-#define MAX_TASKS_PER_PAGE 4
+#define MAX_TASKS_PER_PAGE 5
 
 int currentPage = 0;
 const char* FILE_LOCATION = "/home/ryan-bell/Documents/Beets/notes.txt";
@@ -109,10 +109,12 @@ void printTaskPage(taskList* taskList, int page) {
 }
 
 void printCurrentScreen(taskList* taskList, int page) {
-    //clearScreen();
+    clearScreen();
+    printf("\e[0;37m");
+    printLine("---------------------BEETS------------------------\n\n");
     printTaskPage(taskList, page);
     currentNumberOfPages = (numberOfFilteredTasks/MAX_TASKS_PER_PAGE) + (numberOfFilteredTasks % MAX_TASKS_PER_PAGE == 0 ? 0 : 1);
-    printLine("\t\t<[p] Page %d/%d [n]>\n--------------------------------------------------\n>", page+1, currentNumberOfPages);
+    printLine("----------------<[p] Page %d/%d [n]>----------------\n\e[0;35m>", page+1, currentNumberOfPages);
 }
 
 //Must be freed by caller
@@ -430,7 +432,7 @@ void getCommandFromUser(commandInfo* command) {
     free(splitInput);
 }
 int main() {
-    printf("Welcome to Beets!\n\n");
+    //printf("Welcome to Beets!\n\n");
     //Opening file.
 
     taskList* taskList = taskListCreate();
@@ -445,7 +447,7 @@ int main() {
     int taskNumber;
     printCurrentScreen(taskList, 0);
 
-    printf(">");
+    //printf(">");
     commandInfo* command = malloc(sizeof(commandInfo));
     taskRecord* task;
     command->commandType = NOTHING;

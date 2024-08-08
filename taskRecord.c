@@ -60,7 +60,7 @@ char* taskPrint(taskRecord* task) {
     }
     char* taskString = malloc(128 * sizeof(char));
     char* deadlineString = taskGetDeadlineString(task);
-    sprintf(taskString, "[%c] %s%s\n", task->isComplete ? 'X' : ' ', task->text, deadlineString);
+    sprintf(taskString, "[\e[1;33m%c\e[0;37m] %s%s\n", task->isComplete ? 'X' : ' ', task->text, deadlineString);
     if(deadlineString != "") {
         free(deadlineString);
     }
