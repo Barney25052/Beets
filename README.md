@@ -12,9 +12,9 @@ The goal of the project is to learn C and to create a lightweight console app to
 | add "task" date | Adds task with the specifed text and date. Date can be descriped as year/month/day/hour/minute, in that order. | a, new |
 | rm index | Removes the task at the specified index | remove,delete, del, r |
 | rm "tagname" - NOT IMPLEMENTED | Removes all tasks tagged with "tagname". | remove, delete, del, r
-| complete index | Marks/Toggles a task at index complete | x, mark |
+| complete index | Marks a task at index complete | x, mark |
 | complete "tagname" - NOT IMPLEMENTED | Marks all tasks tagged with "tagname" as complete | x, mark |
-| reset index - NOT IMPLEMENTED | Marks a task at index uncomplete | rst, undo, u |
+| reset index | Marks a task at index uncomplete | rst, undo, u |
 | reset "tagname" - NOT IMPLEMENTED | Marks all tasks tagged with "tagname" as uncomplete | rst, undo, u |
 | edit index "task" | Edits the task at the index to have the new text | e |
 | view num | Switch to specified num page | v |

@@ -18,6 +18,7 @@
 #define NOTHING ' '
 #define VIEW_TASKS 'v'
 #define COMPLETE_TASK 'x'
+#define UNCOMPLETE_TASK 'h'
 #define ADD_TASK 'a'
 #define REMOVE_TASK 'r'
 #define EDIT_TASK 'e'
@@ -225,6 +226,9 @@ char tokenizeCommand(char* commandWord) {
     if(strcmp(commandWord, "complete") == 0 || strcmp(commandWord, "x") == 0 || strcmp(commandWord, "mark") == 0) {
         return COMPLETE_TASK;
     }
+    if(strcmp(commandWord, "reset") == 0 || strcmp(commandWord, "rst") == 0 || strcmp(commandWord, "undo") == 0 || strcmp(commandWord, "u") == 0) {
+        return UNCOMPLETE_TASK;
+    }
     if(strcmp(commandWord, "edit") == 0 || strcmp(commandWord, "e") == 0) {
         return EDIT_TASK;
     }
@@ -317,6 +321,16 @@ void generateCommand(commandInfo* commandInfo, char** commandParts, int numberOf
             commandInfoSetText(commandInfo, commandParts[2]);
             break;
         case COMPLETE_TASK:
+            if(numberOfParts != 2) {
+                commandInfo->commandType = NOTHING;
+                break;
+            }
+            commandInfo->number = atoi(commandParts[1]);
+            if(commandInfo->number == 0 && strcmp(commandParts[1], "0") != 0) {
+                commandInfo->number = -1;
+            }
+            break;
+        case UNCOMPLETE_TASK:
             if(numberOfParts != 2) {
                 commandInfo->commandType = NOTHING;
                 break;
@@ -470,7 +484,17 @@ int main() {
                     break;
                 }
                 task = taskListGetTask(taskList, taskNumber);
-                taskSetComplete(task,!task->isComplete);
+                taskSetComplete(task,true);
+                saveData(FILE_LOCATION, taskList);
+                break;
+            case UNCOMPLETE_TASK:
+                taskNumber = command->number;
+                if(taskNumber < 0 || taskNumber >= taskList->count) {
+                    printLine("Invalid task number\n");
+                    break;
+                }
+                task = taskListGetTask(taskList, taskNumber);
+                taskSetComplete(task,false);
                 saveData(FILE_LOCATION, taskList);
                 break;
             case ADD_TASK:
