@@ -110,7 +110,7 @@ void printTaskPage(taskList* taskList, int page) {
 }
 
 void printCurrentScreen(taskList* taskList, int page) {
-    clearScreen();
+        clearScreen();
     printf("\e[0;37m");
     printLine("---------------------BEETS------------------------\n\n");
     printTaskPage(taskList, page);
@@ -445,9 +445,18 @@ void getCommandFromUser(commandInfo* command) {
     }
     free(splitInput);
 }
-int main() {
+
+void generateCommandFromArgs(commandInfo* command, int argc, char* argv[]) {
+
+    char** sliced = &argv[1];
+
+    generateCommand(command, sliced, argc-1);
+}
+
+int main(int argc, char* argv[]) {
     //printf("Welcome to Beets!\n\n");
     //Opening file.
+    printf("%s", argv[0]);
 
     taskList* taskList = taskListCreate();
 
@@ -466,7 +475,11 @@ int main() {
     taskRecord* task;
     command->commandType = NOTHING;
     while(command->commandType != EXIT_PROGRAM) {
-        getCommandFromUser(command);
+        if(argc == 1) {
+            getCommandFromUser(command);
+        } else {
+            generateCommandFromArgs(command, argc, argv);
+        }
         switch(command->commandType) {
             case VIEW_TASKS:
                 currentPage = command->number;
@@ -585,6 +598,9 @@ int main() {
                 break;
         }
         printCurrentScreen(taskList, currentPage);
+        if(argc != 1) {
+            break;
+        }
     }
 
     free(command);
